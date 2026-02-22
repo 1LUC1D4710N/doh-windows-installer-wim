@@ -35,7 +35,7 @@ The script mounts the WIM via DISM, loads the offline `SYSTEM` hive into a tempo
 - PowerShell 5.1 or later — built into Windows
 - Run as **Administrator**
 - A Windows ISO (downloaded from Microsoft)
-- A USB installer created with Rufus or the Windows Media Creation Tool
+- [Rufus](https://rufus.ie) for creating the USB installer
 
 ---
 
@@ -51,15 +51,29 @@ git clone https://github.com/1LUC1D4710N/doh-windows-installer-wim.git C:\Tools\
 
 Or download the raw file manually: click **Install-DoH-WIM.ps1** in the file list above → click the download button → save to `C:\Tools\doh-wim\`.
 
-### Step 2 — Create your USB installer
+### Step 2 — Create your USB installer with Rufus
 
-Create a bootable Windows USB drive as normal using **Rufus** or the **Windows Media Creation Tool**. Do this first — the USB will contain a `sources\install.wim` that you will replace later.
+[Rufus](https://rufus.ie) is the recommended tool for creating the USB installer. Unlike the Windows Media Creation Tool, Rufus offers options during USB creation that are directly useful alongside this WIM swap:
+
+- **Remove requirement for TPM 2.0, Secure Boot, and RAM** — allows Windows 11 to install on older hardware that does not meet Microsoft's official requirements
+- **Create a local account** — skips the forced Microsoft account sign-in during setup and creates a local account instead
+
+Combined with this WIM injection, a single Rufus USB gives you hardware bypass, no Microsoft account requirement, and 125 DoH providers pre-registered from first boot.
+
+To create the USB:
+1. Download [Rufus](https://rufus.ie) and run it
+2. Select your USB drive
+3. Click **SELECT** and choose your Windows ISO
+4. Click **START** — when prompted, select the options you want (TPM bypass, local account, etc.)
+5. Wait for Rufus to finish writing the USB
+
+The USB will now contain `sources\install.wim` — this is the file you will replace in the next steps.
 
 ### Step 3 — Copy install.wim to your local PC
 
-DISM requires **read/write access** to the WIM file. A mounted ISO and a freshly created USB installer both provide read-only files. You must copy `install.wim` to a local writable folder first.
+DISM requires **read/write access** to the WIM file. A USB installer provides a read-only file by default. You must copy `install.wim` to a local writable folder first.
 
-Create a working folder and copy the file from your USB installer:
+Create a working folder and copy the file from your USB:
 
 ```powershell
 New-Item -ItemType Directory -Path "C:\Temp" -Force
@@ -72,7 +86,7 @@ Replace `E:` with your USB drive letter.
 
 ### Step 4 — Strip the read-only attribute
 
-Files copied from a USB or ISO often carry the read-only attribute. Remove it before running the script:
+Files copied from a USB carry the read-only attribute. Remove it before running the script:
 
 ```powershell
 attrib -R "C:\Temp\install.wim"
@@ -126,7 +140,7 @@ The script will mount, inject, and commit each index one by one. A summary is pr
 
 ### Step 7 — Copy the modified WIM back to the USB
 
-Once the script completes successfully, replace the original `install.wim` on your USB installer with the modified one:
+Once the script completes successfully, replace the original `install.wim` on your USB with the modified one:
 
 ```powershell
 Copy-Item "C:\Temp\install.wim" "E:\sources\install.wim"
