@@ -14,7 +14,7 @@ Injects all 125 DNS-over-HTTPS Well-Known Server entries directly into a Windows
 
 Windows 10 and 11 have a built-in DNS-over-HTTPS feature accessible via **Settings → Network & Internet → DNS Settings**. When you set a DNS server IP, Windows checks its internal `DohWellKnownServers` registry list to see if that IP has a known DoH endpoint — if it does, it auto-fills the HTTPS template for you.
 
-The problem: Microsoft’s built-in list has not been updated since 2020 or earlier. Most modern DNS providers are simply not on it, so Windows cannot auto-template them.
+The problem: Microsoft's built-in list ships with only **3 providers** — Cloudflare, Google, and Quad9 — unchanged since the feature was first introduced in Windows 10 Insider Build 20185 (August 2020). The [official Microsoft documentation](https://learn.microsoft.com/en-us/windows-server/networking/dns/doh-client-support) (last updated December 2023) still reflects only these same 3 providers. All other DNS providers — including Mullvad, AdGuard, Control D, OpenDNS, DNS4EU, Clean Browsing, LibreDNS, Uncensored DNS, and more — are not on the list, so Windows cannot auto-template them.
 
 This script solves that by injecting all 125 provider entries **directly into the WIM image** before Windows is installed, using two registry paths:
 
@@ -108,8 +108,8 @@ After installation and first boot:
 5. Toggle **IPv4** to On
 6. Toggle **IPv6** to On
 7. Under **DNS over HTTPS**, select **On (automatic template)**
-8. Type your preferred provider’s IPv4 address
-9. Type your preferred provider’s IPv6 address
+8. Type your preferred provider's IPv4 address
+9. Type your preferred provider's IPv6 address
 10. Click **Save** — Windows auto-fills the DoH endpoint
 
 Your DNS is now encrypted from the first configuration.
@@ -162,7 +162,7 @@ dism /Cleanup-Wim
 ```
 
 **ESD export fails**
-Some ESD files require the `/Quiet` flag or a different compression level:
+Some ESD files require a different compression level:
 ```powershell
 dism /Export-Image /SourceImageFile:install.esd /SourceIndex:1 /DestinationImageFile:install.wim /Compress:fast
 ```
