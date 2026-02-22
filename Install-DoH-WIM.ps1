@@ -13,25 +13,22 @@
 .PARAMETER WimIndex
     Image index to modify (default: 1).
     Use 'dism /Get-WimInfo /WimFile:<path>' to list available indexes.
+.PARAMETER AllIndexes
+    Automatically detect and process all indexes found in the WIM.
+    Overrides -WimIndex when specified.
 .EXAMPLE
     .\Install-DoH-WIM.ps1 -WimPath "D:\ISO\sources\install.wim"
 .EXAMPLE
     .\Install-DoH-WIM.ps1 -WimPath "D:\ISO\sources\install.wim" -WimIndex 6
-.NOTES
-    Part of the DoH Windows Installer suite.
-    https://github.com/1LUC1D4710N/doh-windows-installer
+.EXAMPLE
+    .\Install-DoH-WIM.ps1 -WimPath "D:\ISO\sources\install.wim" -AllIndexes
 #>
 
 param(
     [Parameter(Mandatory)][string]$WimPath,
-    [int]$WimIndex = 1
+    [int]$WimIndex = 1,
+    [switch]$AllIndexes
 )
-
-$MountDir  = "$env:TEMP\DoH-WIM-Mount"
-$HivePath  = "$MountDir\Windows\System32\config\SYSTEM"
-$HiveAlias = "HKLM\OFFLINE_SYSTEM"
-$WellKnown = "HKLM:\OFFLINE_SYSTEM\CurrentControlSet\Services\Dnscache\Parameters\DohWellKnownServers"
-$GlobalDoh = "HKLM:\OFFLINE_SYSTEM\CurrentControlSet\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP"
 
 $DohServers = @{
     # Cloudflare
@@ -174,73 +171,132 @@ $DohServers = @{
 
 $DohFlags = [byte[]](0x11,0x00,0x00,0x00,0x00,0x00,0x00,0x00)
 
-Write-Host "`n╔════════════════════════════════════════╗"
+function Get-AllWimIndexes {
+    param([string]$Path)
+    $output = dism /Get-WimInfo /WimFile:"$Path" 2>&1
+    $indexes = $output | Where-Object { $_ -match "^\s*Index\s*:\s*\d+" } | ForEach-Object {
+        [int]($_.Trim() -replace "Index\s*:\s*", "")
+    }
+    return $indexes
+}
+
+function Invoke-DohInjection {
+    param([string]$WimFilePath, [int]$Index, [int]$Total)
+
+    $MountDir  = "$env:TEMP\DoH-WIM-Mount-$Index"
+    $HivePath  = "$MountDir\Windows\System32\config\SYSTEM"
+    $HiveAlias = "HKLM\OFFLINE_SYSTEM_$Index"
+    $WellKnown = "HKLM:\OFFLINE_SYSTEM_$Index\CurrentControlSet\Services\Dnscache\Parameters\DohWellKnownServers"
+    $GlobalDoh = "HKLM:\OFFLINE_SYSTEM_$Index\CurrentControlSet\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP"
+
+    Write-Host ""
+    Write-Host "──────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  Index $Index of $Total" -ForegroundColor Cyan
+    Write-Host "──────────────────────────────────────────" -ForegroundColor DarkGray
+
+    try {
+        # Mount
+        Write-Host "  Mounting index $Index..." -ForegroundColor Cyan
+        New-Item -ItemType Directory -Force -Path $MountDir | Out-Null
+        dism /Mount-Wim /WimFile:"$WimFilePath" /Index:$Index /MountDir:"$MountDir" | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "DISM mount failed (exit $LASTEXITCODE)." }
+        Write-Host "  ✓ Mounted." -ForegroundColor Green
+
+        # Load hive
+        Write-Host "  Loading SYSTEM hive..." -ForegroundColor Cyan
+        reg load $HiveAlias "$HivePath" | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "Hive load failed." }
+        Write-Host "  ✓ Hive loaded." -ForegroundColor Green
+
+        # Inject
+        Write-Host "  Injecting $($DohServers.Count) DoH servers..." -ForegroundColor Cyan
+        foreach ($entry in $DohServers.GetEnumerator()) {
+            $ip  = $entry.Key
+            $url = $entry.Value
+            $wkPath = "$WellKnown\$ip"
+            New-Item -Path $wkPath -Force | Out-Null
+            Set-ItemProperty -Path $wkPath -Name "Template" -Value $url
+            $gdPath = "$GlobalDoh\$ip"
+            New-Item -Path $gdPath -Force | Out-Null
+            Set-ItemProperty -Path $gdPath -Name "DohTemplate" -Value $url
+            Set-ItemProperty -Path $gdPath -Name "DohFlags"    -Value $DohFlags -Type Binary
+        }
+        Write-Host "  ✓ $($DohServers.Count) servers injected." -ForegroundColor Green
+
+        # Unload hive
+        Write-Host "  Unloading hive..." -ForegroundColor Cyan
+        [gc]::Collect()
+        Start-Sleep -Milliseconds 500
+        reg unload $HiveAlias | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "Hive unload failed. Handles may still be open." }
+        Write-Host "  ✓ Hive unloaded." -ForegroundColor Green
+
+        # Commit and unmount
+        Write-Host "  Committing and unmounting..." -ForegroundColor Cyan
+        dism /Unmount-Wim /MountDir:"$MountDir" /Commit | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "DISM commit/unmount failed (exit $LASTEXITCODE)." }
+        Write-Host "  ✓ Index $Index complete." -ForegroundColor Green
+
+        return $true
+    }
+    catch {
+        Write-Host "  ✗ ERROR on index ${Index}: $_" -ForegroundColor Red
+        Write-Host "  Attempting cleanup (discard)..." -ForegroundColor Yellow
+        [gc]::Collect()
+        reg unload $HiveAlias 2>$null
+        dism /Unmount-Wim /MountDir:"$MountDir" /Discard 2>$null
+        return $false
+    }
+    finally {
+        Remove-Item -Path $MountDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+# ── Banner ─────────────────────────────────────────────────────────────────
+Write-Host ""
+Write-Host "╔════════════════════════════════════════╗"
 Write-Host "║   DoH WIM Installer                    ║"
 Write-Host "║   Offline DNS-over-HTTPS Injector      ║"
-Write-Host "╚════════════════════════════════════════╝`n"
+Write-Host "╚════════════════════════════════════════╝"
 
-try {
-    # Validate WIM path
-    if (-not (Test-Path $WimPath)) { throw "WIM/ESD file not found: $WimPath" }
+# ── Validate path ──────────────────────────────────────────────────────────
+if (-not (Test-Path $WimPath)) {
+    Write-Host "`n✗ WIM/ESD file not found: $WimPath" -ForegroundColor Red
+    exit 1
+}
 
-    # 1. Mount WIM
-    Write-Host "Mounting WIM index $WimIndex from: $WimPath" -ForegroundColor Cyan
-    New-Item -ItemType Directory -Force -Path $MountDir | Out-Null
-    dism /Mount-Wim /WimFile:"$WimPath" /Index:$WimIndex /MountDir:"$MountDir"
-    if ($LASTEXITCODE -ne 0) { throw "DISM mount failed with exit code $LASTEXITCODE." }
-    Write-Host "✓ WIM mounted.`n" -ForegroundColor Green
-
-    # 2. Load offline SYSTEM hive
-    Write-Host "Loading offline SYSTEM hive..." -ForegroundColor Cyan
-    reg load $HiveAlias "$HivePath"
-    if ($LASTEXITCODE -ne 0) { throw "Failed to load offline SYSTEM hive." }
-    Write-Host "✓ Hive loaded.`n" -ForegroundColor Green
-
-    # 3. Inject DoH entries
-    Write-Host "Injecting $($DohServers.Count) DoH servers..." -ForegroundColor Cyan
-    foreach ($entry in $DohServers.GetEnumerator()) {
-        $ip  = $entry.Key
-        $url = $entry.Value
-
-        # DohWellKnownServers
-        $wkPath = "$WellKnown\$ip"
-        New-Item -Path $wkPath -Force | Out-Null
-        Set-ItemProperty -Path $wkPath -Name "Template" -Value $url
-
-        # GlobalDohIP / InterfaceSpecificParameters
-        $gdPath = "$GlobalDoh\$ip"
-        New-Item -Path $gdPath -Force | Out-Null
-        Set-ItemProperty -Path $gdPath -Name "DohTemplate" -Value $url
-        Set-ItemProperty -Path $gdPath -Name "DohFlags"    -Value $DohFlags -Type Binary
+# ── Determine indexes to process ───────────────────────────────────────────
+if ($AllIndexes) {
+    Write-Host "`nDetecting all indexes in: $WimPath" -ForegroundColor Cyan
+    $indexList = Get-AllWimIndexes -Path $WimPath
+    if (-not $indexList -or $indexList.Count -eq 0) {
+        Write-Host "✗ Could not detect any indexes. Check the WIM path." -ForegroundColor Red
+        exit 1
     }
-    Write-Host "✓ $($DohServers.Count) servers injected.`n" -ForegroundColor Green
-
-    # 4. Unload hive
-    Write-Host "Unloading hive..." -ForegroundColor Cyan
-    [gc]::Collect()  # Release PS handles before unload
-    Start-Sleep -Milliseconds 500
-    reg unload $HiveAlias
-    if ($LASTEXITCODE -ne 0) { throw "Failed to unload offline hive. Handles may still be open." }
-    Write-Host "✓ Hive unloaded.`n" -ForegroundColor Green
-
-    # 5. Commit and unmount WIM
-    Write-Host "Committing and unmounting WIM..." -ForegroundColor Cyan
-    dism /Unmount-Wim /MountDir:"$MountDir" /Commit
-    if ($LASTEXITCODE -ne 0) { throw "DISM unmount/commit failed with exit code $LASTEXITCODE." }
-
-    Write-Host "`n══════════════════════════════════════════"
-    Write-Host "✓ Done! WIM updated with $($DohServers.Count) DoH servers." -ForegroundColor Green
-    Write-Host "  Install Windows from this image — DoH providers"
-    Write-Host "  will be pre-registered from first boot."
-    Write-Host "══════════════════════════════════════════`n"
+    Write-Host "Found $($indexList.Count) indexes: $($indexList -join ', ')" -ForegroundColor Green
+} else {
+    $indexList = @($WimIndex)
 }
-catch {
-    Write-Host "`n✗ ERROR: $_" -ForegroundColor Red
-    Write-Host "`nAttempting cleanup (discard changes)..." -ForegroundColor Yellow
-    [gc]::Collect()
-    reg unload $HiveAlias 2>$null
-    dism /Unmount-Wim /MountDir:"$MountDir" /Discard 2>$null
+
+$total   = $indexList.Count
+$passed  = @()
+$failed  = @()
+
+# ── Process each index ─────────────────────────────────────────────────────
+foreach ($idx in $indexList) {
+    $ok = Invoke-DohInjection -WimFilePath $WimPath -Index $idx -Total $total
+    if ($ok) { $passed += $idx } else { $failed += $idx }
 }
-finally {
-    Remove-Item -Path $MountDir -Recurse -Force -ErrorAction SilentlyContinue
+
+# ── Summary ────────────────────────────────────────────────────────────────
+Write-Host ""
+Write-Host "══════════════════════════════════════════"
+Write-Host "  Summary: $($passed.Count) of $total indexes completed."
+if ($passed.Count -gt 0) {
+    Write-Host "  ✓ Passed : $($passed -join ', ')" -ForegroundColor Green
 }
+if ($failed.Count -gt 0) {
+    Write-Host "  ✗ Failed : $($failed -join ', ')" -ForegroundColor Red
+}
+Write-Host "══════════════════════════════════════════"
+Write-Host ""
