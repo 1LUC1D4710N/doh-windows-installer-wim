@@ -53,18 +53,12 @@ Or download the raw file manually: click **Install-DoH-WIM.ps1** in the file lis
 
 ### Step 2 — Create your USB installer with Rufus
 
-[Rufus](https://rufus.ie) is the recommended tool for creating the USB installer. Unlike the Windows Media Creation Tool, Rufus offers options during USB creation that are directly useful alongside this WIM swap:
+Download [Rufus](https://rufus.ie) and use it to create a bootable Windows USB installer:
 
-- **Remove requirement for TPM 2.0, Secure Boot, and RAM** — allows Windows 11 to install on older hardware that does not meet Microsoft's official requirements
-- **Create a local account** — skips the forced Microsoft account sign-in during setup and creates a local account instead
-
-Combined with this WIM injection, a single Rufus USB gives you hardware bypass, no Microsoft account requirement, and 125 DoH providers pre-registered from first boot.
-
-To create the USB:
-1. Download [Rufus](https://rufus.ie) and run it
+1. Run Rufus
 2. Select your USB drive
 3. Click **SELECT** and choose your Windows ISO
-4. Click **START** — when prompted, select the options you want (TPM bypass, local account, etc.)
+4. Click **START** and follow the prompts
 5. Wait for Rufus to finish writing the USB
 
 The USB will now contain `sources\install.wim` — this is the file you will replace in the next steps.
