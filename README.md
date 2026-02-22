@@ -34,7 +34,8 @@ The script mounts the WIM via DISM, loads the offline `SYSTEM` hive into a tempo
 - DISM — built into Windows, no install needed
 - PowerShell 5.1 or later — built into Windows
 - Run as **Administrator**
-- A `install.wim` or `install.esd` extracted from a Windows ISO
+- A Windows ISO (downloaded from Microsoft)
+- A USB installer created with Rufus or the Windows Media Creation Tool
 
 ---
 
@@ -42,36 +43,47 @@ The script mounts the WIM via DISM, loads the offline `SYSTEM` hive into a tempo
 
 ### Step 1 — Download the script
 
-Download `Install-DoH-WIM.ps1` from this repository and save it to a folder of your choice, for example:
-
-```
-C:\Tools\doh-wim\
-```
-
-To download directly from GitHub, click **Install-DoH-WIM.ps1** in the file list above, then click the download (raw) button. Or clone the repo:
+Clone this repository or download `Install-DoH-WIM.ps1` directly. The examples below use `C:\Tools\doh-wim` as the script location.
 
 ```powershell
 git clone https://github.com/1LUC1D4710N/doh-windows-installer-wim.git C:\Tools\doh-wim
 ```
 
-### Step 2 — Get a Windows ISO
+Or download the raw file manually: click **Install-DoH-WIM.ps1** in the file list above → click the download button → save to `C:\Tools\doh-wim\`.
 
-Download a Windows 10 or 11 ISO from Microsoft. Mount it (double-click) or extract it. The file you need is inside the `sources` folder:
+### Step 2 — Create your USB installer
 
-```
-D:\sources\install.wim
-```
-or
-```
-D:\sources\install.esd
-```
+Create a bootable Windows USB drive as normal using **Rufus** or the **Windows Media Creation Tool**. Do this first — the USB will contain a `sources\install.wim` that you will replace later.
 
-### Step 3 — Check available indexes (editions)
+### Step 3 — Copy install.wim to your local PC
 
-A single WIM file contains multiple Windows editions (Home, Pro, Education, etc.), each with its own index number. Check which indexes are available:
+DISM requires **read/write access** to the WIM file. A mounted ISO and a freshly created USB installer both provide read-only files. You must copy `install.wim` to a local writable folder first.
+
+Create a working folder and copy the file from your USB installer:
 
 ```powershell
-dism /Get-WimInfo /WimFile:"D:\sources\install.wim"
+New-Item -ItemType Directory -Path "C:\Temp" -Force
+Copy-Item "E:\sources\install.wim" "C:\Temp\install.wim"
+```
+
+Replace `E:` with your USB drive letter.
+
+> **Note:** Copying 6+ GB takes a few minutes. Wait for the prompt to return before continuing.
+
+### Step 4 — Strip the read-only attribute
+
+Files copied from a USB or ISO often carry the read-only attribute. Remove it before running the script:
+
+```powershell
+attrib -R "C:\Temp\install.wim"
+```
+
+### Step 5 — Check available indexes (optional)
+
+A single WIM file contains all Windows editions, each with its own index number. To see what is inside:
+
+```powershell
+dism /Get-WimInfo /WimFile:"C:\Temp\install.wim"
 ```
 
 Example output:
@@ -79,16 +91,14 @@ Example output:
 Index : 1  → Windows 11 Home
 Index : 2  → Windows 11 Home N
 Index : 3  → Windows 11 Pro
-Index : 4  → Windows 11 Pro N
+...
 ```
 
-Run the script once per index to cover all editions, or target only the edition you use.
+Using `-AllIndexes` processes all editions automatically, so you do not need to note individual numbers unless targeting a specific edition.
 
-### Step 4 — Run the script
+### Step 6 — Run the script
 
-Open PowerShell as Administrator (right-click → **Run as Administrator**).
-
-Navigate to the folder where you saved the script:
+Open PowerShell **as Administrator** (right-click → Run as Administrator), then:
 
 ```powershell
 cd C:\Tools\doh-wim
@@ -100,45 +110,47 @@ Allow the script to run (required once — Windows blocks unsigned scripts by de
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-Run the script, replacing the path with the actual location of your WIM:
+Process all editions in one run:
 
 ```powershell
-.\Install-DoH-WIM.ps1 -WimPath "D:\sources\install.wim"
+.\Install-DoH-WIM.ps1 -WimPath "C:\Temp\install.wim" -AllIndexes
 ```
 
-Targeting a specific edition by index:
+Or target a single edition by index:
 
 ```powershell
-.\Install-DoH-WIM.ps1 -WimPath "D:\sources\install.wim" -WimIndex 3
+.\Install-DoH-WIM.ps1 -WimPath "C:\Temp\install.wim" -WimIndex 6
 ```
 
-The script will:
-1. Mount the WIM to a temporary folder
-2. Load the offline SYSTEM registry hive
-3. Inject all 125 DoH server entries
-4. Unload the hive
-5. Commit and unmount the WIM
+The script will mount, inject, and commit each index one by one. A summary is printed at the end showing which indexes passed or failed. Expect 5–15 minutes for all 11 editions depending on drive speed.
 
-Completion takes under a minute on most systems.
+### Step 7 — Copy the modified WIM back to the USB
 
-### Step 5 — Install Windows
+Once the script completes successfully, replace the original `install.wim` on your USB installer with the modified one:
 
-Use the modified WIM to install Windows as normal — bootable USB, deployment share, or any other method. The DoH entries are carried into the installation automatically.
+```powershell
+Copy-Item "C:\Temp\install.wim" "E:\sources\install.wim"
+```
 
-### Step 6 — Configure DoH in Settings (2 minutes)
+Replace `E:` with your USB drive letter. The file is the same size so no space issues.
 
-After installation and first boot:
+### Step 8 — Install Windows
+
+Boot from the USB and install Windows as normal. All 125 DoH providers are pre-registered from the moment installation completes — no post-install tools required.
+
+### Step 9 — Configure DoH in Settings (2 minutes)
+
+After first boot:
 
 1. Open **Settings** (Win+I)
 2. Go to **Network & Internet → Advanced network settings → DNS Settings**
 3. Click **Edit** next to DNS servers
 4. Select **Manual**
-5. Toggle **IPv4** to On
-6. Toggle **IPv6** to On
-7. Under **DNS over HTTPS**, select **On (automatic template)**
-8. Type your preferred provider's IPv4 address
-9. Type your preferred provider's IPv6 address
-10. Click **Save** — Windows auto-fills the DoH endpoint
+5. Toggle **IPv4** to On and **IPv6** to On
+6. Under **DNS over HTTPS**, select **On (automatic template)**
+7. Type your preferred provider's IPv4 address
+8. Type your preferred provider's IPv6 address
+9. Click **Save** — Windows auto-fills the DoH endpoint
 
 Your DNS is now encrypted from the first configuration.
 
@@ -146,10 +158,10 @@ Your DNS is now encrypted from the first configuration.
 
 ## ESD Files
 
-ISOs downloaded directly from Microsoft often contain `install.esd` (compressed format) instead of `install.wim`. DISM can mount ESD files directly the same way. If you encounter issues, convert to WIM first:
+Some ISOs contain `install.esd` instead of `install.wim`. Convert it to WIM before running the script:
 
 ```powershell
-dism /Export-Image /SourceImageFile:"D:\sources\install.esd" /SourceIndex:1 /DestinationImageFile:"D:\sources\install.wim" /Compress:max /CheckIntegrity
+dism /Export-Image /SourceImageFile:"C:\Temp\install.esd" /SourceIndex:1 /DestinationImageFile:"C:\Temp\install.wim" /Compress:max /CheckIntegrity
 ```
 
 Then run the script against the exported `install.wim`.
@@ -186,17 +198,23 @@ Run this once in an Administrator PowerShell window, then retry:
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-**`reg unload` fails with Access Denied**
-Close any open registry editor windows and retry. The script includes `[gc]::Collect()` and a short delay to release PowerShell handles before unloading.
+**DISM mount fails with permissions error (0xc1510111)**
+The WIM file is read-only. Strip the attribute before running the script:
+```powershell
+attrib -R "C:\Temp\install.wim"
+```
 
-**DISM mount fails**
-Ensure no other process has the WIM open. If a previous mount was left dirty, clean it first:
+**DISM mount fails with dirty mount error**
+A previous mount was not cleaned up. Run:
 ```powershell
 dism /Cleanup-Wim
 ```
 
+**`reg unload` fails with Access Denied**
+Close any open registry editor windows and retry. The script includes `[gc]::Collect()` and a short delay to release handles before unloading.
+
 **ESD export fails**
-Some ESD files require a different compression level:
+Try a lower compression level:
 ```powershell
 dism /Export-Image /SourceImageFile:install.esd /SourceIndex:1 /DestinationImageFile:install.wim /Compress:fast
 ```
