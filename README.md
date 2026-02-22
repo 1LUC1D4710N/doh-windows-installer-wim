@@ -72,11 +72,9 @@ Download [Rufus](https://rufus.ie) and use it to create a bootable Windows USB i
 
 The USB will now contain `sources\install.wim` — this is the file you will replace in the next steps.
 
-### Step 4 — Copy install.wim to your local PC
+### Step 4 — Extract install.wim from the USB installer to your PC
 
-DISM requires **read/write access** to the WIM file. A USB installer provides a read-only file by default. You must copy `install.wim` to a local writable folder first.
-
-Create a working folder and copy the file from your USB:
+The `install.wim` on the USB installer created in Step 3 is read-only and cannot be modified in place. Copy it from the USB to a local working folder on your PC so DISM can mount and modify it.
 
 ```powershell
 New-Item -ItemType Directory -Path "C:\Temp" -Force
