@@ -41,7 +41,16 @@ The script mounts the WIM via DISM, loads the offline `SYSTEM` hive into a tempo
 
 ## Guide
 
-### Step 1 — Download the script
+### Step 1 — Download a Windows ISO from Microsoft
+
+Download a genuine Windows 10 or 11 ISO directly from Microsoft:
+
+- [Windows 11 ISO](https://www.microsoft.com/software-download/windows11)
+- [Windows 10 ISO](https://www.microsoft.com/software-download/windows10)
+
+Save the ISO to your local PC. Do not mount it — it is only needed for the next step.
+
+### Step 2 — Download the script
 
 Clone this repository or download `Install-DoH-WIM.ps1` directly. The examples below use `C:\Tools\doh-wim` as the script location.
 
@@ -51,7 +60,7 @@ git clone https://github.com/1LUC1D4710N/doh-windows-installer-wim.git C:\Tools\
 
 Or download the raw file manually: click **Install-DoH-WIM.ps1** in the file list above → click the download button → save to `C:\Tools\doh-wim\`.
 
-### Step 2 — Create your USB installer with Rufus
+### Step 3 — Create your USB installer with Rufus
 
 Download [Rufus](https://rufus.ie) and use it to create a bootable Windows USB installer:
 
@@ -63,7 +72,7 @@ Download [Rufus](https://rufus.ie) and use it to create a bootable Windows USB i
 
 The USB will now contain `sources\install.wim` — this is the file you will replace in the next steps.
 
-### Step 3 — Copy install.wim to your local PC
+### Step 4 — Copy install.wim to your local PC
 
 DISM requires **read/write access** to the WIM file. A USB installer provides a read-only file by default. You must copy `install.wim` to a local writable folder first.
 
@@ -78,7 +87,7 @@ Replace `E:` with your USB drive letter.
 
 > **Note:** Copying 6+ GB takes a few minutes. Wait for the prompt to return before continuing.
 
-### Step 4 — Strip the read-only attribute
+### Step 5 — Strip the read-only attribute
 
 Files copied from a USB carry the read-only attribute. Remove it before running the script:
 
@@ -86,7 +95,7 @@ Files copied from a USB carry the read-only attribute. Remove it before running 
 attrib -R "C:\Temp\install.wim"
 ```
 
-### Step 5 — Check available indexes (optional)
+### Step 6 — Check available indexes (optional)
 
 A single WIM file contains all Windows editions, each with its own index number. To see what is inside:
 
@@ -104,7 +113,7 @@ Index : 3  → Windows 11 Pro
 
 Using `-AllIndexes` processes all editions automatically, so you do not need to note individual numbers unless targeting a specific edition.
 
-### Step 6 — Run the script
+### Step 7 — Run the script
 
 Open PowerShell **as Administrator** (right-click → Run as Administrator), then:
 
@@ -132,7 +141,7 @@ Or target a single edition by index:
 
 The script will mount, inject, and commit each index one by one. A summary is printed at the end showing which indexes passed or failed. Expect 5–15 minutes for all 11 editions depending on drive speed.
 
-### Step 7 — Copy the modified WIM back to the USB
+### Step 8 — Copy the modified WIM back to the USB
 
 Once the script completes successfully, replace the original `install.wim` on your USB with the modified one:
 
@@ -142,11 +151,11 @@ Copy-Item "C:\Temp\install.wim" "E:\sources\install.wim"
 
 Replace `E:` with your USB drive letter. The file is the same size so no space issues.
 
-### Step 8 — Install Windows
+### Step 9 — Install Windows
 
 Boot from the USB and install Windows as normal. All 125 DoH providers are pre-registered from the moment installation completes — no post-install tools required.
 
-### Step 9 — Configure DoH in Settings (2 minutes)
+### Step 10 — Configure DoH in Settings (2 minutes)
 
 After first boot:
 
