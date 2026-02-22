@@ -40,7 +40,21 @@ The script mounts the WIM via DISM, loads the offline `SYSTEM` hive into a tempo
 
 ## Guide
 
-### Step 1 — Get a Windows ISO
+### Step 1 — Download the script
+
+Download `Install-DoH-WIM.ps1` from this repository and save it to a folder of your choice, for example:
+
+```
+C:\Tools\doh-wim\
+```
+
+To download directly from GitHub, click **Install-DoH-WIM.ps1** in the file list above, then click the download (raw) button. Or clone the repo:
+
+```powershell
+git clone https://github.com/1LUC1D4710N/doh-windows-installer-wim.git C:\Tools\doh-wim
+```
+
+### Step 2 — Get a Windows ISO
 
 Download a Windows 10 or 11 ISO from Microsoft. Mount it (double-click) or extract it. The file you need is inside the `sources` folder:
 
@@ -52,7 +66,7 @@ or
 D:\sources\install.esd
 ```
 
-### Step 2 — Check available indexes (editions)
+### Step 3 — Check available indexes (editions)
 
 A single WIM file contains multiple Windows editions (Home, Pro, Education, etc.), each with its own index number. Check which indexes are available:
 
@@ -70,9 +84,23 @@ Index : 4  → Windows 11 Pro N
 
 Run the script once per index to cover all editions, or target only the edition you use.
 
-### Step 3 — Run the script
+### Step 4 — Run the script
 
-Right-click PowerShell → **Run as Administrator**, then:
+Open PowerShell as Administrator (right-click → **Run as Administrator**).
+
+Navigate to the folder where you saved the script:
+
+```powershell
+cd C:\Tools\doh-wim
+```
+
+Allow the script to run (required once — Windows blocks unsigned scripts by default):
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Run the script, replacing the path with the actual location of your WIM:
 
 ```powershell
 .\Install-DoH-WIM.ps1 -WimPath "D:\sources\install.wim"
@@ -93,11 +121,11 @@ The script will:
 
 Completion takes under a minute on most systems.
 
-### Step 4 — Install Windows
+### Step 5 — Install Windows
 
 Use the modified WIM to install Windows as normal — bootable USB, deployment share, or any other method. The DoH entries are carried into the installation automatically.
 
-### Step 5 — Configure DoH in Settings (2 minutes)
+### Step 6 — Configure DoH in Settings (2 minutes)
 
 After installation and first boot:
 
@@ -151,6 +179,12 @@ Then run the script against the exported `install.wim`.
 ---
 
 ## Troubleshooting
+
+**Script will not run / blocked by Windows**
+Run this once in an Administrator PowerShell window, then retry:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
 **`reg unload` fails with Access Denied**
 Close any open registry editor windows and retry. The script includes `[gc]::Collect()` and a short delay to release PowerShell handles before unloading.
