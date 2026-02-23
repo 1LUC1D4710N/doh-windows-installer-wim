@@ -139,7 +139,17 @@ Or target a single edition by index:
 
 The script will mount, inject, and commit each index one by one. A summary is printed at the end showing which indexes passed or failed. Expect 5–15 minutes for all 11 editions depending on drive speed.
 
-### Step 8 — Copy the modified WIM back to the USB
+### Step 8 — Restore the read-only attribute
+
+After injection is complete, restore the read-only attribute before copying the file back to the USB:
+
+```powershell
+attrib +R "C:\Temp\install.wim"
+```
+
+This mirrors the original state of the file on the USB installer.
+
+### Step 9 — Copy the modified WIM back to the USB
 
 Once the script completes successfully, replace the original `install.wim` on your USB with the modified one:
 
@@ -149,11 +159,11 @@ Copy-Item "C:\Temp\install.wim" "E:\sources\install.wim"
 
 Replace `E:` with your USB drive letter. The file is the same size so no space issues.
 
-### Step 9 — Install Windows
+### Step 10 — Install Windows
 
 Boot from the USB and install Windows as normal. All 125 DoH providers are pre-registered from the moment installation completes — no post-install tools required.
 
-### Step 10 — Configure DoH in Settings (2 minutes)
+### Step 11 — Configure DoH in Settings (2 minutes)
 
 After first boot:
 
