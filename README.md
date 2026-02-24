@@ -18,13 +18,15 @@ The problem: Microsoft's built-in list ships with only **3 providers** — Cloud
 
 This script solves that by injecting all 125 provider entries **directly into the WIM image** before Windows is installed, using two registry paths:
 
-- `HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters\DohWellKnownServers`
+- `HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters\DohWellKnownServers`
   Registers each DNS IP with its DoH `Template` URL. This is the key path Windows reads to auto-fill the endpoint.
 
-- `HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP`
+- `HKLM\SYSTEM\ControlSet001\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP`
   Sets `DohTemplate` and `DohFlags` per IP. Using `GlobalDohIP` as the key name circumvents the need to target individual network adapter GUIDs, which change per machine and would make offline injection impractical.
 
-The script mounts the WIM via DISM, loads the offline `SYSTEM` hive into a temporary registry alias, writes all entries, unloads the hive, and commits the image. Changes are baked into the WIM — Windows Setup carries them into every installation from that image.
+> **Note:** The script targets `ControlSet001` rather than `CurrentControlSet`. In an offline loaded hive, `CurrentControlSet` is an unresolved symlink — writing to it silently places keys at an invalid location, which causes `0x67 CONFIG_INITIALIZATION_FAILED` on first boot. `ControlSet001` is the correct path for offline hive operations. On a running Windows system, `CurrentControlSet` maps to `ControlSet001`, so all injected keys are read correctly after installation.
+
+The script mounts the WIM via DISM, loads the offline `SYSTEM` hive into a temporary registry alias, writes all entries into `ControlSet001`, flushes all .NET handles, unloads the hive, verifies the hive is fully released, and then commits the image. Changes are baked into the WIM — Windows Setup carries them into every installation from that image.
 
 ---
 
@@ -236,13 +238,26 @@ dism /Cleanup-Wim
 ```
 
 **`reg unload` fails with Access Denied**
-Close any open registry editor windows and retry. The script includes `[gc]::Collect()` and a short delay to release handles before unloading.
+Close any open registry editor windows and retry. The script includes `[gc]::Collect()`, `[gc]::WaitForPendingFinalizers()`, and a 2-second delay to fully release all handles before unloading.
 
 **ESD export fails**
 Try a lower compression level:
 ```powershell
 dism /Export-Image /SourceImageFile:install.esd /SourceIndex:1 /DestinationImageFile:install.wim /Compress:fast
 ```
+
+**System boots to 0x67 (CONFIG_INITIALIZATION_FAILED) after injection**
+The registry configuration failed on boot. This was caused by writing DoH keys to `CurrentControlSet` in the offline hive — `CurrentControlSet` is a symlink that does not resolve in an offline loaded hive, so the keys were written to an invalid location. The script has been corrected to use `ControlSet001` instead. If you are seeing this error from a previous version, re-run the script against a fresh copy of `install.wim`.
+
+If the issue persists after re-running, use these diagnostics:
+
+| Check | Command |
+|---|---|
+| View DISM log | `notepad C:\Windows\Logs\DISM\dism.log` |
+| List stale mount points | `dism /Get-MountedWimInfo` |
+| Clean up broken mounts | `dism /Cleanup-Wim` |
+| Discard and unmount | `dism /Unmount-Image /MountDir:C:\Mount /Discard` |
+| Check WIM indexes | `dism /Get-WimInfo /WimFile:C:\Temp\install.wim` |
 
 ---
 
