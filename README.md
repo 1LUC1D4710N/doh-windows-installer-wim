@@ -113,7 +113,18 @@ Index : 3  → Windows 11 Pro
 
 Using `-AllIndexes` processes all editions automatically, so you do not need to note individual numbers unless targeting a specific edition.
 
-### Step 7 — Run the script
+### Step 7 — Verify you have the latest script version
+
+Before running, make sure you are using the latest version of the script. If you cloned the repository, pull the latest changes:
+
+```powershell
+cd C:\Tools\doh-wim
+git pull
+```
+
+If you downloaded `Install-DoH-WIM.ps1` manually, re-download it from the repo to ensure you have the current version before continuing.
+
+### Step 8 — Run the script
 
 Open PowerShell **as Administrator** (right-click → Run as Administrator), then:
 
@@ -141,7 +152,7 @@ Or target a single edition by index:
 
 The script will mount, inject, and commit each index one by one. A summary is printed at the end showing which indexes passed or failed. Expect 5–15 minutes for all 11 editions depending on drive speed.
 
-### Step 8 — Restore the read-only attribute
+### Step 9 — Restore the read-only attribute
 
 After injection is complete, restore the read-only attribute before copying the file back to the USB:
 
@@ -151,7 +162,7 @@ attrib +R "C:\Temp\install.wim"
 
 This mirrors the original state of the file on the USB installer.
 
-### Step 9 — Copy the modified WIM back to the USB
+### Step 10 — Copy the modified WIM back to the USB
 
 Once the script completes successfully, replace the original `install.wim` on your USB with the modified one:
 
@@ -161,11 +172,11 @@ Copy-Item "C:\Temp\install.wim" "E:\sources\install.wim"
 
 Replace `E:` with your USB drive letter. The file is the same size so no space issues.
 
-### Step 10 — Install Windows
+### Step 11 — Install Windows
 
 Boot from the USB and install Windows as normal. All 125 DoH providers are pre-registered from the moment installation completes — no post-install tools required.
 
-### Step 11 — Configure DoH in Settings (2 minutes)
+### Step 12 — Configure DoH in Settings (2 minutes)
 
 After first boot:
 
