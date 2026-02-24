@@ -186,8 +186,14 @@ function Invoke-DohInjection {
     $MountDir  = "$env:TEMP\DoH-WIM-Mount-$Index"
     $HivePath  = "$MountDir\Windows\System32\config\SYSTEM"
     $HiveAlias = "HKLM\OFFLINE_SYSTEM_$Index"
-    $WellKnown = "HKLM:\OFFLINE_SYSTEM_$Index\CurrentControlSet\Services\Dnscache\Parameters\DohWellKnownServers"
-    $GlobalDoh = "HKLM:\OFFLINE_SYSTEM_$Index\CurrentControlSet\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP"
+
+    # NOTE: ControlSet001 must be used here — not CurrentControlSet.
+    # CurrentControlSet is a symlink that only resolves on a live running system.
+    # In an offline loaded hive it does not resolve, causing the injected keys
+    # to be written to an invalid location. On boot, Windows fails to read the
+    # Dnscache configuration and throws 0x67 CONFIG_INITIALIZATION_FAILED.
+    $WellKnown = "HKLM:\OFFLINE_SYSTEM_$Index\ControlSet001\Services\Dnscache\Parameters\DohWellKnownServers"
+    $GlobalDoh = "HKLM:\OFFLINE_SYSTEM_$Index\ControlSet001\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP"
 
     Write-Host ""
     Write-Host "──────────────────────────────────────────" -ForegroundColor DarkGray
@@ -223,13 +229,19 @@ function Invoke-DohInjection {
         }
         Write-Host "  ✓ $($DohServers.Count) servers injected." -ForegroundColor Green
 
-        # Unload hive
+        # Unload hive — flush all .NET handles before unloading
         Write-Host "  Unloading hive..." -ForegroundColor Cyan
         [gc]::Collect()
-        Start-Sleep -Milliseconds 500
+        [gc]::WaitForPendingFinalizers()
+        Start-Sleep -Seconds 2
         reg unload $HiveAlias | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "Hive unload failed. Handles may still be open." }
         Write-Host "  ✓ Hive unloaded." -ForegroundColor Green
+
+        # Verify hive is fully released before committing
+        if (Test-Path "HKLM:\OFFLINE_SYSTEM_$Index") {
+            throw "Hive still present after unload. Aborting commit to prevent WIM corruption."
+        }
 
         # Commit and unmount
         Write-Host "  Committing and unmounting..." -ForegroundColor Cyan
@@ -243,6 +255,7 @@ function Invoke-DohInjection {
         Write-Host "  ✗ ERROR on index ${Index}: $_" -ForegroundColor Red
         Write-Host "  Attempting cleanup (discard)..." -ForegroundColor Yellow
         [gc]::Collect()
+        [gc]::WaitForPendingFinalizers()
         reg unload $HiveAlias 2>$null
         dism /Unmount-Wim /MountDir:"$MountDir" /Discard 2>$null
         return $false
