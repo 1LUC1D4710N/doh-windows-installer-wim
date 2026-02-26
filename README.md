@@ -80,10 +80,10 @@ The `install.wim` on the USB installer created in Step 3 is read-only and cannot
 
 ```powershell
 New-Item -ItemType Directory -Path "C:\Temp" -Force
-Copy-Item "E:\sources\install.wim" "C:\Temp\install.wim"
+Copy-Item "X:\sources\install.wim" "C:\Temp\install.wim"
 ```
 
-Replace `E:` with your USB drive letter.
+Replace `X:` with your USB drive letter. To check your USB drive letter, open File Explorer — it is shown next to your USB drive name.
 
 > **Note:** Copying 6+ GB takes a few minutes. Wait for the prompt to return before continuing.
 
@@ -118,36 +118,31 @@ Using `-AllIndexes` processes all editions automatically, so you do not need to 
 Before running, make sure you are using the latest version of the script. If you cloned the repository, pull the latest changes:
 
 ```powershell
-cd C:\Tools\doh-wim
-git pull
+git -C C:\Tools\doh-wim pull
 ```
 
 If you downloaded `Install-DoH-WIM.ps1` manually, re-download it from the repo to ensure you have the current version before continuing.
 
 ### Step 8 — Run the script
 
-Open PowerShell **as Administrator** (right-click → Run as Administrator), then:
-
-```powershell
-cd C:\Tools\doh-wim
-```
-
-Allow the script to run (required once — Windows blocks unsigned scripts by default):
+Open PowerShell **as Administrator** (right-click → Run as Administrator), then allow the script to run (required once — Windows blocks unsigned scripts by default):
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
+The commands below use the full path to the script so they work from any folder — you do not need to navigate into the script directory first.
+
 Process all editions in one run:
 
 ```powershell
-.\Install-DoH-WIM.ps1 -WimPath "C:\Temp\install.wim" -AllIndexes
+C:\Tools\doh-wim\Install-DoH-WIM.ps1 -WimPath "C:\Temp\install.wim" -AllIndexes
 ```
 
-Or target a single edition by index:
+Or target a single edition by index number (replace `6` with your chosen index from Step 6):
 
 ```powershell
-.\Install-DoH-WIM.ps1 -WimPath "C:\Temp\install.wim" -WimIndex 6
+C:\Tools\doh-wim\Install-DoH-WIM.ps1 -WimPath "C:\Temp\install.wim" -WimIndex 6
 ```
 
 The script will mount, inject, and commit each index one by one. A summary is printed at the end showing which indexes passed or failed. Expect 5–15 minutes for all 11 editions depending on drive speed.
@@ -167,10 +162,10 @@ This mirrors the original state of the file on the USB installer.
 Once the script completes successfully, replace the original `install.wim` on your USB with the modified one:
 
 ```powershell
-Copy-Item "C:\Temp\install.wim" "E:\sources\install.wim"
+Copy-Item "C:\Temp\install.wim" "X:\sources\install.wim"
 ```
 
-Replace `E:` with your USB drive letter. The file is the same size so no space issues.
+Replace `X:` with your USB drive letter.
 
 ### Step 11 — Install Windows
 
