@@ -269,6 +269,49 @@ If the issue persists after re-running, use these diagnostics:
 
 ---
 
+## Verifying the Injection (Post-Install Test)
+
+After installing Windows from the modified image, run these checks in PowerShell to confirm all 125 entries were baked in correctly and survived the full Windows Setup process.
+
+### Test 1 — DohWellKnownServers (125 entries)
+
+```powershell
+$keys = Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters\DohWellKnownServers"
+Write-Host "DohWellKnownServers entries: $($keys.Count)"
+```
+
+Expected output: `DohWellKnownServers entries: 125`
+
+### Test 2 — GlobalDohIP (125 entries)
+
+```powershell
+$keys = Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP"
+Write-Host "GlobalDohIP entries: $($keys.Count)"
+```
+
+Expected output: `GlobalDohIP entries: 125`
+
+### Test 3 — Spot check a specific provider
+
+```powershell
+Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters\DohWellKnownServers\9.9.9.9"
+Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP\9.9.9.9"
+```
+
+Expected: `Template` shows `https://dns.quad9.net/dns-query`, `DohTemplate` matches, and `DohFlags` is present.
+
+### Test 4 — Settings UI confirmation
+
+1. Open **Settings → Network & Internet → Advanced network settings → DNS Settings**
+2. Click **Edit** next to DNS servers
+3. Select **Manual** and toggle IPv4 on
+4. Type any provider IP from the list — for example `9.9.9.9`, `94.140.14.14`, or `194.242.2.2`
+5. **"On (automatic template)"** should appear and auto-fill the DoH URL without you typing it
+
+If all four tests pass — the image was correctly modified and Windows was born with all 125 DoH providers registered. ✅
+
+---
+
 ## License
 
 MIT License — No email. No tracking. No accounts.
