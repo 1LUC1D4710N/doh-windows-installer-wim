@@ -196,9 +196,9 @@ function Invoke-DohInjection {
     $GlobalDoh = "HKLM:\OFFLINE_SYSTEM_$Index\ControlSet001\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP"
 
     Write-Host ""
-    Write-Host "──────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "===========================================" -ForegroundColor DarkGray
     Write-Host "  Index $Index of $Total" -ForegroundColor Cyan
-    Write-Host "──────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "===========================================" -ForegroundColor DarkGray
 
     try {
         # Mount
@@ -206,13 +206,13 @@ function Invoke-DohInjection {
         New-Item -ItemType Directory -Force -Path $MountDir | Out-Null
         dism /Mount-Wim /WimFile:"$WimFilePath" /Index:$Index /MountDir:"$MountDir" | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "DISM mount failed (exit $LASTEXITCODE)." }
-        Write-Host "  ✓ Mounted." -ForegroundColor Green
+        Write-Host "  [OK] Mounted." -ForegroundColor Green
 
         # Load hive
         Write-Host "  Loading SYSTEM hive..." -ForegroundColor Cyan
         reg load $HiveAlias "$HivePath" | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "Hive load failed." }
-        Write-Host "  ✓ Hive loaded." -ForegroundColor Green
+        Write-Host "  [OK] Hive loaded." -ForegroundColor Green
 
         # Inject
         Write-Host "  Injecting $($DohServers.Count) DoH servers..." -ForegroundColor Cyan
@@ -227,7 +227,7 @@ function Invoke-DohInjection {
             Set-ItemProperty -Path $gdPath -Name "DohTemplate" -Value $url
             Set-ItemProperty -Path $gdPath -Name "DohFlags"    -Value $DohFlags -Type Binary
         }
-        Write-Host "  ✓ $($DohServers.Count) servers injected." -ForegroundColor Green
+        Write-Host "  [OK] $($DohServers.Count) servers injected." -ForegroundColor Green
 
         # Unload hive — flush all .NET handles before unloading
         Write-Host "  Unloading hive..." -ForegroundColor Cyan
@@ -236,7 +236,7 @@ function Invoke-DohInjection {
         Start-Sleep -Seconds 2
         reg unload $HiveAlias | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "Hive unload failed. Handles may still be open." }
-        Write-Host "  ✓ Hive unloaded." -ForegroundColor Green
+        Write-Host "  [OK] Hive unloaded." -ForegroundColor Green
 
         # Verify hive is fully released before committing
         if (Test-Path "HKLM:\OFFLINE_SYSTEM_$Index") {
@@ -247,12 +247,12 @@ function Invoke-DohInjection {
         Write-Host "  Committing and unmounting..." -ForegroundColor Cyan
         dism /Unmount-Wim /MountDir:"$MountDir" /Commit | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "DISM commit/unmount failed (exit $LASTEXITCODE)." }
-        Write-Host "  ✓ Index $Index complete." -ForegroundColor Green
+        Write-Host "  [OK] Index $Index complete." -ForegroundColor Green
 
         return $true
     }
     catch {
-        Write-Host "  ✗ ERROR on index ${Index}: $_" -ForegroundColor Red
+        Write-Host "  [FAIL] ERROR on index ${Index}: $_" -ForegroundColor Red
         Write-Host "  Attempting cleanup (discard)..." -ForegroundColor Yellow
         [gc]::Collect()
         [gc]::WaitForPendingFinalizers()
@@ -265,25 +265,25 @@ function Invoke-DohInjection {
     }
 }
 
-# ── Banner ─────────────────────────────────────────────────────────────────
+# -- Banner ------------------------------------------------------------------
 Write-Host ""
-Write-Host "╔════════════════════════════════════════╗"
-Write-Host "║   DoH WIM Installer                    ║"
-Write-Host "║   Offline DNS-over-HTTPS Injector      ║"
-Write-Host "╚════════════════════════════════════════╝"
+Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host "  DoH WIM Installer" -ForegroundColor Cyan
+Write-Host "  Offline DNS-over-HTTPS Injector" -ForegroundColor Cyan
+Write-Host "==========================================" -ForegroundColor Cyan
 
-# ── Validate path ──────────────────────────────────────────────────────────
+# -- Validate path -----------------------------------------------------------
 if (-not (Test-Path $WimPath)) {
-    Write-Host "`n✗ WIM/ESD file not found: $WimPath" -ForegroundColor Red
+    Write-Host "`n[FAIL] WIM/ESD file not found: $WimPath" -ForegroundColor Red
     exit 1
 }
 
-# ── Determine indexes to process ───────────────────────────────────────────
+# -- Determine indexes to process --------------------------------------------
 if ($AllIndexes) {
     Write-Host "`nDetecting all indexes in: $WimPath" -ForegroundColor Cyan
     $indexList = Get-AllWimIndexes -Path $WimPath
     if (-not $indexList -or $indexList.Count -eq 0) {
-        Write-Host "✗ Could not detect any indexes. Check the WIM path." -ForegroundColor Red
+        Write-Host "[FAIL] Could not detect any indexes. Check the WIM path." -ForegroundColor Red
         exit 1
     }
     Write-Host "Found $($indexList.Count) indexes: $($indexList -join ', ')" -ForegroundColor Green
@@ -295,21 +295,21 @@ $total   = $indexList.Count
 $passed  = @()
 $failed  = @()
 
-# ── Process each index ─────────────────────────────────────────────────────
+# -- Process each index ------------------------------------------------------
 foreach ($idx in $indexList) {
     $ok = Invoke-DohInjection -WimFilePath $WimPath -Index $idx -Total $total
     if ($ok) { $passed += $idx } else { $failed += $idx }
 }
 
-# ── Summary ────────────────────────────────────────────────────────────────
+# -- Summary -----------------------------------------------------------------
 Write-Host ""
-Write-Host "══════════════════════════════════════════"
-Write-Host "  Summary: $($passed.Count) of $total indexes completed."
+Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host "  Summary: $($passed.Count) of $total indexes completed." -ForegroundColor Cyan
 if ($passed.Count -gt 0) {
-    Write-Host "  ✓ Passed : $($passed -join ', ')" -ForegroundColor Green
+    Write-Host "  [OK] Passed : $($passed -join ', ')" -ForegroundColor Green
 }
 if ($failed.Count -gt 0) {
-    Write-Host "  ✗ Failed : $($failed -join ', ')" -ForegroundColor Red
+    Write-Host "  [FAIL] Failed : $($failed -join ', ')" -ForegroundColor Red
 }
-Write-Host "══════════════════════════════════════════"
+Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host ""
