@@ -54,13 +54,15 @@ Save the ISO to your local PC. Do not mount it — it is only needed for the nex
 
 ### Step 2 — Download the script
 
-Clone this repository or download `Install-DoH-WIM.ps1` directly. The examples below use `C:\Tools\doh-wim` as the script location.
+**Recommended: Use `git clone`** — this is the preferred method. It gives you the latest version of the script, avoids Windows script-blocking issues with browser-downloaded files, and makes updating a single command in Step 7.
 
 ```powershell
 git clone https://github.com/1LUC1D4710N/doh-windows-installer-wim.git C:\Tools\doh-wim
 ```
 
-Or download the raw file manually: click **Install-DoH-WIM.ps1** in the file list above → click the download button → save to `C:\Tools\doh-wim\`.
+> **Don't have Git?** Download [Git for Windows](https://git-scm.com/download/win) — it takes two minutes to install and is worth having.
+
+**Alternative (no Git):** Click **Install-DoH-WIM.ps1** in the file list above → click the download button → save to `C:\Tools\doh-wim\`. Note that files downloaded through a browser may be flagged by Windows and require extra steps before PowerShell will run them. Using `git clone` avoids this entirely.
 
 ### Step 3 — Create your USB installer with Rufus
 
