@@ -270,25 +270,25 @@ If the issue persists after re-running, use these diagnostics:
 
 ## Verifying the Injection (Post-Install Test)
 
-After installing Windows from the modified image, run these checks in PowerShell to confirm all 125 entries were baked in correctly and survived the full Windows Setup process.
+After installing Windows from the modified image, run these checks in PowerShell to confirm all 114 entries were baked in correctly and survived the full Windows Setup process.
 
-### Test 1 — DohWellKnownServers (125 entries)
+### Test 1 — DohWellKnownServers (114 entries)
 
 ```powershell
 $keys = Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters\DohWellKnownServers"
 Write-Host "DohWellKnownServers entries: $($keys.Count)"
 ```
 
-Expected output: `DohWellKnownServers entries: 125`
+Expected output: `DohWellKnownServers entries: 114`
 
-### Test 2 — GlobalDohIP (125 entries)
+### Test 2 — GlobalDohIP (114 entries)
 
 ```powershell
 $keys = Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP"
 Write-Host "GlobalDohIP entries: $($keys.Count)"
 ```
 
-Expected output: `GlobalDohIP entries: 125`
+Expected output: `GlobalDohIP entries: 114`
 
 ### Test 3 — Spot check a specific provider
 
