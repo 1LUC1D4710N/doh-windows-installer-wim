@@ -1,6 +1,6 @@
 # DNS Providers Reference
 
-Complete list of all 119 DNS-over-HTTPS servers injected by the DoH WIM Installer.
+Complete list of all 114 DNS-over-HTTPS servers injected by the DoH WIM Installer.
 
 ---
 
