@@ -4,9 +4,9 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078d4)](https://microsoft.com)
 [![Built with](https://img.shields.io/badge/Built%20with-PowerShell-5391FE)](https://microsoft.com/powershell)
 
-**Bake 125 DoH servers into Windows before it even installs.**
+**Bake 114 DoH servers into Windows before it even installs.**
 
-Injects all 125 DNS-over-HTTPS Well-Known Server entries directly into a Windows `install.wim` or `install.esd` image — offline, before installation. When Windows is installed from the modified image, every provider is pre-registered from first boot. No post-install tool needed.
+Injects all 114 DNS-over-HTTPS Well-Known Server entries directly into a Windows `install.wim` or `install.esd` image — offline, before installation. When Windows is installed from the modified image, every provider is pre-registered from first boot. No post-install tool needed.
 
 ---
 
@@ -212,7 +212,6 @@ Then run the script against the exported `install.wim`.
 | DNS4EU | Multi-filter | 86.54.11.x | 2a13:1001::... | European Privacy |
 | Quad9 | Security | 9.9.9.9 | 2620:fe::9 | Non-profit Security |
 | Google | Standard | 8.8.8.8 | 2001:4860:4860::8888 | Performance |
-| Mullvad | Privacy-first | 194.242.2.2 | 2a07:e340::2 | Privacy + Adblock |
 | AdGuard | Multi-filter | 94.140.14.14 | 2a10:50c0::ad1:ff | All-in-one Protection |
 | OpenDNS | Enterprise | 208.67.222.222 | 2620:119:35::35 | Business Use |
 | Clean Browsing | Family | 185.228.168.168 | 2a0d:2a00:1:: | Family Safety |
@@ -308,7 +307,7 @@ Expected: `Template` shows `https://dns.quad9.net/dns-query`, `DohTemplate` matc
 4. Type any provider IP from the list — for example `9.9.9.9`, `94.140.14.14`, or `194.242.2.2`
 5. **"On (automatic template)"** should appear and auto-fill the DoH URL without you typing it
 
-If all four tests pass — the image was correctly modified and Windows was born with all 125 DoH providers registered. ✅
+If all four tests pass — the image was correctly modified and Windows was born with all 114 DoH providers registered. ✅
 
 ---
 
