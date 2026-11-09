@@ -94,7 +94,7 @@ Complete list of all 119 DNS-over-HTTPS servers injected by the DoH WIM Installe
 
 ---
 
-## Quad9 (13 configurations)
+## Quad9 (12 configurations)
 
 **Standard (Malware & Phishing)**
 - IPv4: `9.9.9.9` → https://dns.quad9.net/dns-query
