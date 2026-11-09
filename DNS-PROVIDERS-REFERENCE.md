@@ -1,6 +1,6 @@
 # DNS Providers Reference
 
-Complete list of all 125 DNS-over-HTTPS servers injected by the DoH WIM Installer.
+Complete list of all 119 DNS-over-HTTPS servers injected by the DoH WIM Installer.
 
 ---
 
@@ -130,31 +130,7 @@ Complete list of all 125 DNS-over-HTTPS servers injected by the DoH WIM Installe
 
 ---
 
-## Mullvad DNS (10 configurations)
-
-**Standard**
-- IPv4: `194.242.2.2` → https://dns.mullvad.net/dns-query
-- IPv6: `2a07:e340::2` → https://dns.mullvad.net/dns-query
-
-**Adblock**
-- IPv4: `194.242.2.3` → https://adblock.dns.mullvad.net/dns-query
-- IPv6: `2a07:e340::3` → https://adblock.dns.mullvad.net/dns-query
-
-**Base (Malware Blocking)**
-- IPv4: `194.242.2.4` → https://base.dns.mullvad.net/dns-query
-- IPv6: `2a07:e340::4` → https://base.dns.mullvad.net/dns-query
-
-**Extended (Malware + Phishing + Adult)**
-- IPv4: `194.242.2.5` → https://extended.dns.mullvad.net/dns-query
-- IPv6: `2a07:e340::5` → https://extended.dns.mullvad.net/dns-query
-
-**Family Filter**
-- IPv4: `194.242.2.6` → https://family.dns.mullvad.net/dns-query
-- IPv6: `2a07:e340::6` → https://family.dns.mullvad.net/dns-query
-
-**All Protections**
-- IPv4: `194.242.2.9` → https://all.dns.mullvad.net/dns-query
-- IPv6: `2a07:e340::9` → https://all.dns.mullvad.net/dns-query
+## Mullvad DNS (Discontinued since November 2, 2026 - advisory to use alternatives)
 
 ---
 
@@ -253,7 +229,6 @@ Complete list of all 125 DNS-over-HTTPS servers injected by the DoH WIM Installe
 | DNS4EU | Multi-filter | 86.54.11.x | 2a13:1001::... | European Privacy |
 | Quad9 | Security | 9.9.9.9 | 2620:fe::9 | Non-profit Security |
 | Google | Standard | 8.8.8.8 | 2001:4860:4860::8888 | Performance |
-| Mullvad | Privacy-first | 194.242.2.2 | 2a07:e340::2 | Privacy + Adblock |
 | AdGuard | Multi-filter | 94.140.14.14 | 2a10:50c0::ad1:ff | All-in-one |
 | OpenDNS | Enterprise | 208.67.222.222 | 2620:119:35::35 | Business Use |
 | Clean Browsing | Family | 185.228.168.168 | 2a0d:2a00:1:: | Family Safety |
