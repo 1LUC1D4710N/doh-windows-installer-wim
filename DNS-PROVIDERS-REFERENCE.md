@@ -1,6 +1,12 @@
 # DNS Providers Reference
 
-Complete list of all 113 DNS-over-HTTPS servers injected by the DoH WIM Installer.
+Complete list of all 115 DNS-over-HTTPS servers injected by the DoH WIM Installer.
+
+---
+
+      DNS0.eu has been discontinued on October 17th, 2025. 
+      For secure DNS-over-HTTPS, use alternatives like DNS4EU or NextDNS.io.
+      Mullvad DNS discontinued since November 2, 2026.
 
 ---
 
