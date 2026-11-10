@@ -4,7 +4,7 @@
     Injects DoH Well-Known Servers into a Windows WIM/ESD image offline.
 .DESCRIPTION
     Mounts a Windows WIM or ESD image using DISM, loads the offline SYSTEM
-    registry hive, and injects all 115 DNS-over-HTTPS (DoH) Well-Known Server
+    registry hive, and injects all 113 DNS-over-HTTPS (DoH) Well-Known Server
     entries. The image is then committed and unmounted. After installing Windows
     from the modified image, all providers are pre-registered — no post-install
     tool required.
