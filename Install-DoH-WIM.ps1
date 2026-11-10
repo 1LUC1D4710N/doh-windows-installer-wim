@@ -4,7 +4,7 @@
     Injects DoH Well-Known Servers into a Windows WIM/ESD image offline.
 .DESCRIPTION
     Mounts a Windows WIM or ESD image using DISM, loads the offline SYSTEM
-    registry hive, and injects all 113 DNS-over-HTTPS (DoH) Well-Known Server
+    registry hive, and injects all 114 DNS-over-HTTPS (DoH) Well-Known Server
     entries. The image is then committed and unmounted. After installing Windows
     from the modified image, all providers are pre-registered — no post-install
     tool required.
@@ -90,6 +90,7 @@ $DohServers = @{
     "9.9.9.9"                     = "https://dns.quad9.net/dns-query"
     "149.112.112.112"             = "https://dns.quad9.net/dns-query"
     "9.9.9.10"                    = "https://dns10.quad9.net/dns-query"
+    "149.112.112.10"              = "https://dns10.quad9.net/dns-query"
     "9.9.9.11"                    = "https://dns11.quad9.net/dns-query"
     "149.112.112.9"               = "https://dns9.quad9.net/dns-query"
     "149.112.112.11"              = "https://dns11.quad9.net/dns-query"
@@ -141,7 +142,7 @@ $DohServers = @{
     "185.228.168.9"               = "https://doh.cleanbrowsing.org/doh/security-filter/"
     "185.228.169.9"               = "https://doh.cleanbrowsing.org/doh/security-filter/"
     "2a0d:2a00:1::"               = "https://doh.cleanbrowsing.org/doh/family-filter/"
-    "2a0d:2a00:2::"               = "https://doh.cleanbrowsing.org/doh/security-filter/"
+    "2a0d:2a00:2::"               = "https://doh.cleanbrowsing.org/doh/family-filter/"
     "2a0d:2a00:1::1"              = "https://doh.cleanbrowsing.org/doh/adult-filter/"
     "2a0d:2a00:2::1"              = "https://doh.cleanbrowsing.org/doh/adult-filter/"
     "2a0d:2a00:1::2"              = "https://doh.cleanbrowsing.org/doh/security-filter/"

@@ -12,9 +12,9 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078d4)](https://microsoft.com)
 [![Built with](https://img.shields.io/badge/Built%20with-PowerShell-5391FE)](https://microsoft.com/powershell)
 
-**Bake 113 DoH servers into Windows before it even installs.**
+**Bake 114 DoH servers into Windows before it even installs.**
 
-Injects all 113 DNS-over-HTTPS Well-Known Server entries directly into a Windows `install.wim` or `install.esd` image — offline, before installation. When Windows is installed from the modified image, every provider is pre-registered from first boot. No post-install tool needed.
+Injects all 114 DNS-over-HTTPS Well-Known Server entries directly into a Windows `install.wim` or `install.esd` image — offline, before installation. When Windows is installed from the modified image, every provider is pre-registered from first boot. No post-install tool needed.
 
 ---
 
@@ -24,7 +24,7 @@ Windows 10 and 11 have a built-in DNS-over-HTTPS feature accessible via **Settin
 
 The problem: Microsoft's built-in list ships with only **3 providers** — Cloudflare, Google, and Quad9 — unchanged since the feature was first introduced in Windows 10 Insider Build 20185 (August 2020). The [official Microsoft documentation](https://learn.microsoft.com/en-us/windows-server/networking/dns/doh-client-support) (last updated December 2023) still reflects only these same 3 providers. All other DNS providers — including AdGuard, Control D, OpenDNS, DNS4EU, Clean Browsing, LibreDNS, Uncensored DNS, and more — are not on the list, so Windows cannot auto-template them.
 
-This script solves that by injecting all 113 provider entries **directly into the WIM image** before Windows is installed, using two registry paths:
+This script solves that by injecting all 114 provider entries **directly into the WIM image** before Windows is installed, using two registry paths:
 
 - `HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters\DohWellKnownServers`
   Registers each DNS IP with its DoH `Template` URL. This is the key path Windows reads to auto-fill the endpoint.
@@ -179,7 +179,7 @@ Replace `X:` with your USB drive letter.
 
 ### Step 11 — Install Windows
 
-Boot from the USB and install Windows as normal. All 113 DoH providers are pre-registered from the moment installation completes — no post-install tools required.
+Boot from the USB and install Windows as normal. All 114 DoH providers are pre-registered from the moment installation completes — no post-install tools required.
 
 ### Step 12 — Configure DoH in Settings (2 minutes)
 
@@ -226,9 +226,9 @@ Then run the script against the exported `install.wim`.
 | LibreDNS | Minimal | 116.202.176.26 | 2a01:4f8:1c0c:8274::1 | Lightweight |
 | Uncensored DNS | No-filter | 91.239.100.100 | 2001:67c:28a4:: | Unrestricted |
 
-**113 configurations total — IPv4 and IPv6 for all providers.**
+**114 configurations total — IPv4 and IPv6 for all providers.**
 
-→ [See full DNS Providers Reference](DNS-PROVIDERS-REFERENCE.md) for all 113 IPs and DoH endpoints.
+→ [See full DNS Providers Reference](DNS-PROVIDERS-REFERENCE.md) for all 114 IPs and DoH endpoints.
 
 ---
 
@@ -278,25 +278,25 @@ If the issue persists after re-running, use these diagnostics:
 
 ## Verifying the Injection (Post-Install Test)
 
-After installing Windows from the modified image, run these checks in PowerShell to confirm all 113 entries were baked in correctly and survived the full Windows Setup process.
+After installing Windows from the modified image, run these checks in PowerShell to confirm all 114 entries were baked in correctly and survived the full Windows Setup process.
 
-### Test 1 — DohWellKnownServers (113 entries)
+### Test 1 — DohWellKnownServers (114 entries)
 
 ```powershell
 $keys = Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters\DohWellKnownServers"
 Write-Host "DohWellKnownServers entries: $($keys.Count)"
 ```
 
-Expected output: `DohWellKnownServers entries: 113`
+Expected output: `DohWellKnownServers entries: 114`
 
-### Test 2 — GlobalDohIP (113 entries)
+### Test 2 — GlobalDohIP (114 entries)
 
 ```powershell
 $keys = Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\InterfaceSpecificParameters\GlobalDohIP"
 Write-Host "GlobalDohIP entries: $($keys.Count)"
 ```
 
-Expected output: `GlobalDohIP entries: 113`
+Expected output: `GlobalDohIP entries: 114`
 
 ### Test 3 — Spot check a specific provider
 
@@ -315,7 +315,7 @@ Expected: `Template` shows `https://dns.quad9.net/dns-query`, `DohTemplate` matc
 4. Type any provider IP from the list — for example `9.9.9.9` or `94.140.14.14`
 5. **"On (automatic template)"** should appear and auto-fill the DoH URL without you typing it
 
-If all four tests pass — the image was correctly modified and Windows was born with all 113 DoH providers registered. ✅
+If all four tests pass — the image was correctly modified and Windows was born with all 114 DoH providers registered. ✅
 
 ---
 

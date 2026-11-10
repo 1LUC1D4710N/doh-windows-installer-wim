@@ -1,6 +1,6 @@
 # DNS Providers Reference
 
-Complete list of all 113 DNS-over-HTTPS servers injected by the DoH WIM Installer.
+Complete list of all 114 DNS-over-HTTPS servers injected by the DoH WIM Installer.
 
 ---
 
@@ -100,7 +100,7 @@ Complete list of all 113 DNS-over-HTTPS servers injected by the DoH WIM Installe
 
 ---
 
-## Quad9 (13 configurations)
+## Quad9 (14 configurations)
 
 **Standard (Malware & Phishing)**
 - IPv4: `9.9.9.9` → https://dns.quad9.net/dns-query
@@ -110,16 +110,21 @@ Complete list of all 113 DNS-over-HTTPS servers injected by the DoH WIM Installe
 
 **Malware + DNSSEC**
 - IPv4: `9.9.9.10` → https://dns10.quad9.net/dns-query
-- IPv4: `149.112.112.9` → https://dns9.quad9.net/dns-query
-- IPv6: `2620:fe::fe:9` → https://dns9.quad9.net/dns-query
+- IPv4: `149.112.112.10` → https://dns10.quad9.net/dns-query
 - IPv6: `2620:fe::10` → https://dns10.quad9.net/dns-query
 - IPv6: `2620:fe::fe:10` → https://dns10.quad9.net/dns-query
 
-**ECS Disabled**
+**ECS Enabled (privacy advisory)**
 - IPv4: `9.9.9.11` → https://dns11.quad9.net/dns-query
 - IPv4: `149.112.112.11` → https://dns11.quad9.net/dns-query
 - IPv6: `2620:fe::11` → https://dns11.quad9.net/dns-query
 - IPv6: `2620:fe::fe:11` → https://dns11.quad9.net/dns-query
+
+**Additional DNS9 endpoints (optional)**
+- IPv4: `149.112.112.9` → https://dns9.quad9.net/dns-query
+- IPv6: `2620:fe::fe:9` → https://dns9.quad9.net/dns-query
+
+ECS (EDNS Client Subnet) can send a truncated client subnet to authoritative DNS infrastructure to improve geolocation. This may reveal an approximate location. Use the standard or Malware + DNSSEC profile if ECS is not appropriate for your privacy needs.
 
 ---
 
