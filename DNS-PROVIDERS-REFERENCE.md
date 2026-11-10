@@ -1,6 +1,6 @@
 # DNS Providers Reference
 
-Complete list of all 114 DNS-over-HTTPS servers injected by the DoH WIM Installer.
+Complete list of all 113 DNS-over-HTTPS servers injected by the DoH WIM Installer.
 
 ---
 
@@ -94,7 +94,7 @@ Complete list of all 114 DNS-over-HTTPS servers injected by the DoH WIM Installe
 
 ---
 
-## Quad9 (12 configurations)
+## Quad9 (13 configurations)
 
 **Standard (Malware & Phishing)**
 - IPv4: `9.9.9.9` → https://dns.quad9.net/dns-query
@@ -105,6 +105,7 @@ Complete list of all 114 DNS-over-HTTPS servers injected by the DoH WIM Installe
 **Malware + DNSSEC**
 - IPv4: `9.9.9.10` → https://dns10.quad9.net/dns-query
 - IPv4: `149.112.112.9` → https://dns9.quad9.net/dns-query
+- IPv6: `2620:fe::fe:9` → https://dns9.quad9.net/dns-query
 - IPv6: `2620:fe::10` → https://dns10.quad9.net/dns-query
 - IPv6: `2620:fe::fe:10` → https://dns10.quad9.net/dns-query
 
@@ -129,8 +130,6 @@ Complete list of all 114 DNS-over-HTTPS servers injected by the DoH WIM Installe
 - IPv6: `2001:4860:4860::6464` → https://dns64.dns.google/dns-query
 
 ---
-
-## Mullvad DNS (Discontinued since November 2, 2026 - advisory to use alternatives)
 
 ---
 
